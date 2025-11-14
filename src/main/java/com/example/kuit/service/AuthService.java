@@ -58,8 +58,11 @@ public class AuthService {
 
         // TODO: DB에 저장되어있는 토큰과 요청으로 받은 토큰의 동일 여부 검사
         String accessToken = jwtUtil.generateAccessToken(username, role.name());
+        String newRefreshToken = jwtUtil.generateRefreshToken(username, role.name());
 
+        refreshTokenRepository.deleteByUsername(username);
+        refreshTokenRepository.save(new RefreshToken(username, newRefreshToken, jwtUtil.getExpiration(newRefreshToken)));
         // TODO: AccessToken 재발급
-        return ReissueResponse.of(accessToken, refreshToken);
+        return ReissueResponse.of(accessToken, newRefreshToken);
     }
 }
