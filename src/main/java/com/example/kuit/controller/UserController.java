@@ -6,6 +6,7 @@ import com.example.kuit.jwt.JwtUtil;
 import com.example.kuit.model.Role;
 import com.example.kuit.model.TokenType;
 import com.example.kuit.service.UserService;
+import com.example.kuit.util.AuthorizationHeaderUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -32,7 +33,7 @@ public class UserController {
      */
     @GetMapping("/me")
     public ResponseEntity<ProfileResponse> me(HttpServletRequest request) {
-        String token = extractBearer(request);
+        String token = AuthorizationHeaderUtils.extractBearerToken(request);
 
         if (!jwtUtil.validate(token)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
@@ -55,8 +56,7 @@ public class UserController {
     @GetMapping("/admin")
     public ResponseEntity<AdminResponse> admin(HttpServletRequest request) {
         // TODO: 토큰 추출 - extractBearer 메서드 활용
-        String token = extractBearer(request);
-
+        String token = AuthorizationHeaderUtils.extractBearerToken(request);
 
         // TODO: 토큰 유효성 검사 - jwtUtil.validate 메서드 활용
         if (!jwtUtil.validate(token)) {
@@ -73,16 +73,7 @@ public class UserController {
         if (role != Role.ROLE_ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "관리자 권한이 필요합니다.");
         }
+
         return ResponseEntity.ok(AdminResponse.ok());
-    }
-
-    // 헤더로부터 토큰 추출
-    private String extractBearer(HttpServletRequest request) {
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-        if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization 헤더 전송 형식이 잘못되었습니다.");
-        }
-        return header.substring(7);
     }
 }

@@ -1,6 +1,9 @@
 package com.example.kuit.auth;
 
 import com.example.kuit.jwt.JwtUtil;
+import com.example.kuit.model.Role;
+import com.example.kuit.model.TokenType;
+import com.example.kuit.util.AuthorizationHeaderUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,29 @@ public class AuthInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        final String token;
+
+        try {
+            token = AuthorizationHeaderUtils.extractBearerToken(request);
+        } catch (IllegalArgumentException e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+            return false;
+        }
+
+        if (!jwtUtil.validate(token)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+            return false;
+        }
+
+        if (jwtUtil.getTokenType(token) != TokenType.ACCESS) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access Token 이 필요합니다.");
+            return false;
+        }
+
+        request.setAttribute("username", jwtUtil.getUsername(token));
+        Role role = jwtUtil.getRole(token);
+        request.setAttribute("role", role);
+
         return true;
     }
 }

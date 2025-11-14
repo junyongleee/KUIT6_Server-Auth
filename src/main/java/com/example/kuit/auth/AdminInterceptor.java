@@ -1,5 +1,6 @@
 package com.example.kuit.auth;
 
+import com.example.kuit.model.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,23 @@ public class AdminInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        Object roleAttribute = request.getAttribute("role");
+        Role role = null;
+
+        if (roleAttribute instanceof Role r) {
+            role = r;
+        } else if (roleAttribute instanceof String value) {
+            try {
+                role = Role.valueOf(value);
+            } catch (IllegalArgumentException ignored) {
+                role = null;
+            }
+        }
+
+        if (role != Role.ROLE_ADMIN) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자 권한이 필요합니다.");
+            return false;
+        }
         return true;
     }
 }
